@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Party Game - Schermo Host</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div class="container host-container">
+    <!-- Header -->
+    <header class="game-header">
+      <div class="round-badge" id="round-badge">Caricamento...</div>
+      <div id="buzzer-banner" class="buzzer-banner hidden">
+        🚨 HA PRENOTATO: <span id="buzzer-winner" class="glow-yellow">---</span>
+      </div>
+      <div class="nav-controls">
+        <button class="btn btn-secondary" onclick="prevCard()">◀ Prec</button>
+        <span id="card-counter">1 / 18</span>
+        <button class="btn btn-secondary" onclick="nextCard()">Succ ▶</button>
+      </div>
+    </header>
+
+    <!-- Storia / Domanda -->
+    <div class="card question-card">
+      <h2 id="round-story">---</h2>
+    </div>
+
+    <!-- Risposte Submissions -->
+    <div class="card submission-card">
+      <div class="answers-grid">
+        <div class="answer-box top-answer"><span class="badge">1</span><p id="ans-1">---</p></div>
+        <div class="answer-box top-answer"><span class="badge">2</span><p id="ans-2">---</p></div>
+        <div class="answer-box top-answer"><span class="badge">3</span><p id="ans-3">---</p></div>
+      </div>
+
+      <!-- Meme -->
+      <div class="meme-container">
+        <button class="btn btn-meme" id="btn-meme" onclick="revealMeme()">🎭 Rivela Risposta MEME</button>
+        <div id="meme-box" class="answer-box meme-answer hidden">
+          <span class="badge meme-badge">MEME / FLOP</span>
+          <p id="ans-meme">---</p>
+        </div>
+      </div>
+
+      <!-- Autore & Sblocco Buzzer -->
+      <div class="reveal-container">
+        <div class="btn-group">
+          <button class="btn btn-secondary" onclick="resetBuzzer()">🔄 Reset Buzzer</button>
+          <button class="btn btn-reveal" id="btn-author" onclick="revealAuthor()">❓ Rivela Chi l'ha Scritto</button>
+        </div>
+        <div id="author-box" class="author-display hidden">
+          <span class="written-by">Scritto da:</span>
+          <h2 id="author-name" class="glow-green">---</h2>
+        </div>
+      </div>
+    </div>
+
+    <!-- Classifica Live dei Giocatori Connessi -->
+    <div class="card scoreboard-card">
+      <h3>Giocatori Connessi & Punteggi</h3>
+      <div id="scoreboard" class="scoreboard-grid"></div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="host.js"></script>
+</body>
+</html>
