@@ -6,22 +6,24 @@ let currentGameState = {
   currentSubmission: 0,
   isMemeRevealed: false,
   isAuthorRevealed: false,
+  buzzerQueue: [],
 };
 let myPlayerName = "";
 let playersList = [];
 
-// Ricezione Stato Iniziale dal Server
+// Ricezione Stato Iniziale
 socket.on("init_game", (data) => {
   if (data && data.gameData && data.gameData.length > 0) {
     GAME_DATA_LOCAL = data.gameData;
   }
   if (data && data.state) {
     currentGameState = data.state;
+    renderBuzzerQueue(data.state.buzzerQueue || []);
   }
   updateViews();
 });
 
-// Navigazione tra le schermate
+// Navigazione Viste
 function goToView(viewId) {
   document
     .querySelectorAll(".view-section")
@@ -29,12 +31,11 @@ function goToView(viewId) {
   const target = document.getElementById(`view-${viewId}`);
   if (target) {
     target.classList.remove("hidden");
-    // Aggiorna subito i testi e le schede quando entri nella vista
     updateViews();
   }
 }
 
-// ==================== CONTROLLER GIOCATORE ====================
+// ==================== GIOCATORE ====================
 function joinGame() {
   const input = document.getElementById("player-name-input");
   const name = input.value.trim();
@@ -103,9 +104,21 @@ function triggerBuzzerReset() {
   socket.emit("reset_buzzer");
 }
 
-// ==================== EVENTI SOCKET.IO ====================
+function triggerPassBuzzerTurn() {
+  socket.emit("pass_buzzer_turn");
+}
+
+function scoreCurrentBuzzWinner(points) {
+  if (currentGameState.buzzerQueue && currentGameState.buzzerQueue.length > 0) {
+    const winnerName = currentGameState.buzzerQueue[0].name;
+    socket.emit("update_score", { playerName: winnerName, delta: points });
+  }
+}
+
+// ==================== EVENTI SOCKET ====================
 socket.on("card_updated", (state) => {
   currentGameState = state;
+  renderBuzzerQueue([]);
   updateViews();
 });
 
@@ -121,36 +134,42 @@ socket.on("author_revealed", () => {
   document.getElementById("host-author-box").classList.remove("hidden");
 });
 
-socket.on("buzzer_locked", ({ player }) => {
-  document.getElementById("host-buzzer-winner").textContent = player;
-  document.getElementById("host-buzzer-banner").classList.remove("hidden");
-
-  document.getElementById("regia-buzzer-player").textContent = player;
-  document.getElementById("regia-buzzer-alert").classList.remove("hidden");
+// Aggiornamento Ordine di Buzz
+socket.on("buzzer_queue_updated", ({ queue, firstPlayer }) => {
+  currentGameState.buzzerQueue = queue;
+  renderBuzzerQueue(queue);
 
   const btn = document.getElementById("buzzer-btn");
   const status = document.getElementById("player-status-msg");
-  if (btn) btn.classList.add("disabled");
-  if (status) {
-    if (player === myPlayerName) {
-      status.textContent = "🎉 TI SEI PRENOTATO! RISPONDI!";
-      status.style.color = "#00ff66";
+
+  // Verifica posizione del giocatore locale
+  const myIndex = queue.findIndex((item) => item.name === myPlayerName);
+  if (myIndex !== -1) {
+    if (myIndex === 0) {
+      if (btn) btn.classList.add("disabled");
+      if (status) {
+        status.textContent = "👑 TOCCA A TE! RISPONDI!";
+        status.style.color = "#00ff66";
+      }
     } else {
-      status.textContent = `⏳ Prenotato da: ${player}`;
-      status.style.color = "#ff007f";
+      if (btn) btn.classList.add("disabled");
+      if (status) {
+        status.textContent = `Sei in coda al ${myIndex + 1}° posto...`;
+        status.style.color = "#ffe600";
+      }
     }
   }
 });
 
 socket.on("buzzer_reset", () => {
-  document.getElementById("host-buzzer-banner").classList.add("hidden");
-  document.getElementById("regia-buzzer-alert").classList.add("hidden");
+  currentGameState.buzzerQueue = [];
+  renderBuzzerQueue([]);
 
   const btn = document.getElementById("buzzer-btn");
   const status = document.getElementById("player-status-msg");
   if (btn) btn.classList.remove("disabled");
   if (status) {
-    status.textContent = "Buzzer Pronto! Premi appena sai la risposta!";
+    status.textContent = "Buzzer Pronto! Premi per prenotarti!";
     status.style.color = "#00f0ff";
   }
 });
@@ -171,6 +190,51 @@ function modifyScore(playerName, delta) {
 }
 
 // ==================== RENDERING UI ====================
+function renderBuzzerQueue(queue) {
+  const hostCard = document.getElementById("host-buzzer-queue-card");
+  const hostList = document.getElementById("host-buzzer-list");
+  const regiaCard = document.getElementById("regia-buzzer-queue-card");
+  const regiaList = document.getElementById("regia-buzzer-list");
+
+  if (!queue || queue.length === 0) {
+    if (hostCard) hostCard.classList.add("hidden");
+    if (regiaCard) regiaCard.classList.add("hidden");
+    if (hostList) hostList.innerHTML = "";
+    if (regiaList) regiaList.innerHTML = "";
+    return;
+  }
+
+  if (hostCard) hostCard.classList.remove("hidden");
+  if (regiaCard) regiaCard.classList.remove("hidden");
+
+  const generateHtml = (isRegia = false) => {
+    return queue
+      .map((item, idx) => {
+        const isFirst = idx === 0;
+        return `
+        <div class="buzzer-queue-item ${isFirst ? "active-turn" : ""}">
+          <span class="queue-pos">${idx + 1}°</span>
+          <span class="queue-name">${item.name}</span>
+          ${isFirst ? '<span class="turn-badge">STA RISPONDENDO</span>' : ""}
+          ${
+            isRegia && isFirst
+              ? `
+            <div class="queue-quick-score">
+              <button class="btn btn-sm btn-primary" onclick="scoreCurrentBuzzWinner(1)">+1 Pt</button>
+            </div>
+          `
+              : ""
+          }
+        </div>
+      `;
+      })
+      .join("");
+  };
+
+  if (hostList) hostList.innerHTML = generateHtml(false);
+  if (regiaList) regiaList.innerHTML = generateHtml(true);
+}
+
 function updateViews() {
   if (!GAME_DATA_LOCAL || GAME_DATA_LOCAL.length === 0) return;
 
@@ -183,7 +247,7 @@ function updateViews() {
   const sub = validSubs[currentGameState.currentSubmission] || validSubs[0];
   if (!sub) return;
 
-  // 1. Schermo Host
+  // Schermo Host
   document.getElementById("host-round-badge").textContent =
     `Round ${round.round} / ${GAME_DATA_LOCAL.length}`;
   document.getElementById("host-card-counter").textContent =
@@ -211,7 +275,7 @@ function updateViews() {
     document.getElementById("host-author-box").classList.add("hidden");
   }
 
-  // 2. Pannello Regia
+  // Regia
   document.getElementById("regia-round-title").textContent =
     `Round ${round.round}: ${round.story.substring(0, 50)}...`;
   document.getElementById("regia-card-counter").textContent =
@@ -253,7 +317,6 @@ function renderScoreboards() {
   });
 }
 
-// Inizializza subito con i dati locali se già caricati
 document.addEventListener("DOMContentLoaded", () => {
   updateViews();
 });

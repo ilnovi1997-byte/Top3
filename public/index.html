@@ -9,13 +9,12 @@
 </head>
 <body>
 
-  <!-- ==================== HOME / LANDING SELEZIONE RUOLO ==================== -->
+  <!-- ==================== HOME / LANDING ==================== -->
   <main id="view-home" class="view-section home-section">
     <div class="home-card card">
       <h1 class="glow-text main-title">TOP 3 & MEME</h1>
       <p class="subtitle">Il Party Game con i segreti e le risposte del gruppo</p>
 
-      <!-- QR Code Centrale -->
       <div class="home-qr-container">
         <div class="home-qr-box">
           <img 
@@ -28,7 +27,6 @@
         <span class="home-link-badge">top3-6lt6.onrender.com</span>
       </div>
 
-      <!-- Scelta Ruolo -->
       <div class="home-roles-grid">
         <button class="role-select-card role-card-player" onclick="goToView('player')">
           <span class="role-icon">📱</span>
@@ -39,7 +37,7 @@
         <button class="role-select-card role-card-host" onclick="goToView('host')">
           <span class="role-icon">📺</span>
           <h3>Schermo Host</h3>
-          <p>Display per TV, PC o proiettore</p>
+          <p>Display per TV, PC o proiettore con coda Buzz</p>
         </button>
 
         <button class="role-select-card role-card-regia" onclick="goToView('regia')">
@@ -51,7 +49,7 @@
     </div>
   </main>
 
-  <!-- ==================== VISTA 1: GIOCATORE (CONTROLLER) ==================== -->
+  <!-- ==================== VISTA 1: GIOCATORE ==================== -->
   <main id="view-player" class="view-section hidden">
     <button class="btn-back-home" onclick="goToView('home')">🏠 Home</button>
 
@@ -86,9 +84,6 @@
         <div class="header-left">
           <button class="btn btn-secondary btn-sm" onclick="goToView('home')">🏠 Esci</button>
           <div class="round-badge" id="host-round-badge">Round 1/22</div>
-          <div id="host-buzzer-banner" class="buzzer-banner hidden">
-            🚨 PRENOTATO DA: <span id="host-buzzer-winner" class="glow-yellow">---</span>
-          </div>
         </div>
 
         <div class="nav-controls">
@@ -97,6 +92,18 @@
           <button class="btn btn-secondary" onclick="nextCard()">Succ ▶</button>
         </div>
       </header>
+
+      <!-- SEZIONE ORDINE DI BUZZ HOST -->
+      <div id="host-buzzer-queue-card" class="card buzzer-queue-card hidden">
+        <div class="queue-header">
+          <h3>🚨 ORDINE DI PRENOTAZIONE (BUZZ)</h3>
+          <div class="queue-btn-actions">
+            <button class="btn btn-secondary btn-sm" onclick="triggerPassBuzzerTurn()">❌ Risposta Sbagliata (Passa al 2°)</button>
+            <button class="btn btn-secondary btn-sm" onclick="triggerBuzzerReset()">🔄 Azzera Coda</button>
+          </div>
+        </div>
+        <div id="host-buzzer-list" class="buzzer-list"></div>
+      </div>
 
       <div class="card question-card">
         <h2 id="host-story">---</h2>
@@ -119,7 +126,6 @@
 
         <div class="reveal-container">
           <div class="btn-group">
-            <button class="btn btn-secondary" onclick="triggerBuzzerReset()">🔄 Reset Buzzer</button>
             <button class="btn btn-reveal" id="host-btn-author" onclick="triggerAuthorReveal()">❓ Chi l'ha Scritto?</button>
           </div>
           <div id="host-author-box" class="author-display hidden">
@@ -136,7 +142,7 @@
     </div>
   </main>
 
-  <!-- ==================== VISTA 3: REGIA (GAME MASTER) ==================== -->
+  <!-- ==================== VISTA 3: REGIA ==================== -->
   <main id="view-regia" class="view-section hidden">
     <div class="container">
       <div class="regia-header">
@@ -153,9 +159,17 @@
         </div>
       </div>
 
-      <div id="regia-buzzer-alert" class="regia-buzzer-box hidden">
-        <span>🚨 Ha prenotato: <strong id="regia-buzzer-player" class="glow-yellow">---</strong></span>
-        <button class="btn btn-sm btn-secondary" onclick="triggerBuzzerReset()">Reset Buzzer</button>
+      <!-- CODA BUZZ REGIA -->
+      <div id="regia-buzzer-queue-card" class="card buzzer-queue-card hidden">
+        <div class="queue-header">
+          <h3>🚨 Ordine Prenotazioni in Diretta</h3>
+          <div class="queue-btn-actions">
+            <button class="btn btn-sm btn-primary" onclick="scoreCurrentBuzzWinner(1)">+1 Pt al Turno Attuale</button>
+            <button class="btn btn-sm btn-secondary" onclick="triggerPassBuzzerTurn()">Passa al Prossimo</button>
+            <button class="btn btn-sm btn-secondary" onclick="triggerBuzzerReset()">Reset</button>
+          </div>
+        </div>
+        <div id="regia-buzzer-list" class="buzzer-list"></div>
       </div>
 
       <div class="card regia-spoiler-card">
