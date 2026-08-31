@@ -2559,6 +2559,7 @@ const GAME_DATA = [
   },
   // Aggiungi in fondo a gameData.js
 ];
+// In fondo a gameData.js
 if (typeof module !== "undefined" && module.exports) {
   module.exports = GAME_DATA;
 }

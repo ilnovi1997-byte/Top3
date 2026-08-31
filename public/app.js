@@ -1,20 +1,27 @@
 const socket = io();
 
-let GAME_DATA = [];
-let roundIdx = 0;
-let subIdx = 0;
+let GAME_DATA_LOCAL = typeof GAME_DATA !== "undefined" ? GAME_DATA : [];
+let currentGameState = {
+  currentRound: 0,
+  currentSubmission: 0,
+  isMemeRevealed: false,
+  isAuthorRevealed: false,
+};
 let myPlayerName = "";
 let playersList = [];
 
 // Ricezione Stato Iniziale dal Server
 socket.on("init_game", (data) => {
-  GAME_DATA = data.gameData;
-  roundIdx = data.state.currentRound;
-  subIdx = data.state.currentSubmission;
-  updateViews(data.state);
+  if (data && data.gameData && data.gameData.length > 0) {
+    GAME_DATA_LOCAL = data.gameData;
+  }
+  if (data && data.state) {
+    currentGameState = data.state;
+  }
+  updateViews();
 });
 
-// Gestione Navigazione Viste
+// Navigazione tra le schermate
 function goToView(viewId) {
   document
     .querySelectorAll(".view-section")
@@ -22,6 +29,8 @@ function goToView(viewId) {
   const target = document.getElementById(`view-${viewId}`);
   if (target) {
     target.classList.remove("hidden");
+    // Aggiorna subito i testi e le schede quando entri nella vista
+    updateViews();
   }
 }
 
@@ -45,33 +54,41 @@ function hitBuzzer() {
   socket.emit("press_buzzer");
 }
 
-// ==================== NAVIGAZIONE CARTE E SYNC ====================
+// ==================== NAVIGAZIONE CARTE ====================
 function nextCard() {
-  const round = GAME_DATA[roundIdx];
+  if (!GAME_DATA_LOCAL || GAME_DATA_LOCAL.length === 0) return;
+  const round = GAME_DATA_LOCAL[currentGameState.currentRound];
   const validSubs = round.submissions.filter(
     (s) => s.player && s.player !== "a a",
   );
 
-  if (subIdx < validSubs.length - 1) {
-    subIdx++;
-  } else if (roundIdx < GAME_DATA.length - 1) {
-    roundIdx++;
-    subIdx = 0;
+  if (currentGameState.currentSubmission < validSubs.length - 1) {
+    currentGameState.currentSubmission++;
+  } else if (currentGameState.currentRound < GAME_DATA_LOCAL.length - 1) {
+    currentGameState.currentRound++;
+    currentGameState.currentSubmission = 0;
   }
-  socket.emit("change_card", { roundIdx, subIdx });
+  socket.emit("change_card", {
+    roundIdx: currentGameState.currentRound,
+    subIdx: currentGameState.currentSubmission,
+  });
 }
 
 function prevCard() {
-  if (subIdx > 0) {
-    subIdx--;
-  } else if (roundIdx > 0) {
-    roundIdx--;
-    const validSubs = GAME_DATA[roundIdx].submissions.filter(
-      (s) => s.player && s.player !== "a a",
-    );
-    subIdx = validSubs.length - 1;
+  if (!GAME_DATA_LOCAL || GAME_DATA_LOCAL.length === 0) return;
+  if (currentGameState.currentSubmission > 0) {
+    currentGameState.currentSubmission--;
+  } else if (currentGameState.currentRound > 0) {
+    currentGameState.currentRound--;
+    const validSubs = GAME_DATA_LOCAL[
+      currentGameState.currentRound
+    ].submissions.filter((s) => s.player && s.player !== "a a");
+    currentGameState.currentSubmission = validSubs.length - 1;
   }
-  socket.emit("change_card", { roundIdx, subIdx });
+  socket.emit("change_card", {
+    roundIdx: currentGameState.currentRound,
+    subIdx: currentGameState.currentSubmission,
+  });
 }
 
 function triggerMemeReveal() {
@@ -88,40 +105,40 @@ function triggerBuzzerReset() {
 
 // ==================== EVENTI SOCKET.IO ====================
 socket.on("card_updated", (state) => {
-  roundIdx = state.currentRound;
-  subIdx = state.currentSubmission;
-  updateViews(state);
+  currentGameState = state;
+  updateViews();
 });
 
 socket.on("meme_revealed", () => {
+  currentGameState.isMemeRevealed = true;
   document.getElementById("host-btn-meme").classList.add("hidden");
   document.getElementById("host-meme-box").classList.remove("hidden");
 });
 
 socket.on("author_revealed", () => {
+  currentGameState.isAuthorRevealed = true;
   document.getElementById("host-btn-author").classList.add("hidden");
   document.getElementById("host-author-box").classList.remove("hidden");
 });
 
 socket.on("buzzer_locked", ({ player }) => {
-  // Host
   document.getElementById("host-buzzer-winner").textContent = player;
   document.getElementById("host-buzzer-banner").classList.remove("hidden");
 
-  // Regia
   document.getElementById("regia-buzzer-player").textContent = player;
   document.getElementById("regia-buzzer-alert").classList.remove("hidden");
 
-  // Giocatore
   const btn = document.getElementById("buzzer-btn");
   const status = document.getElementById("player-status-msg");
-  btn.classList.add("disabled");
-  if (player === myPlayerName) {
-    status.textContent = "🎉 TI SEI PRENOTATO! RISPONDI!";
-    status.style.color = "#00ff66";
-  } else {
-    status.textContent = `⏳ Prenotato da: ${player}`;
-    status.style.color = "#ff007f";
+  if (btn) btn.classList.add("disabled");
+  if (status) {
+    if (player === myPlayerName) {
+      status.textContent = "🎉 TI SEI PRENOTATO! RISPONDI!";
+      status.style.color = "#00ff66";
+    } else {
+      status.textContent = `⏳ Prenotato da: ${player}`;
+      status.style.color = "#ff007f";
+    }
   }
 });
 
@@ -131,9 +148,11 @@ socket.on("buzzer_reset", () => {
 
   const btn = document.getElementById("buzzer-btn");
   const status = document.getElementById("player-status-msg");
-  btn.classList.remove("disabled");
-  status.textContent = "Buzzer Pronto! Premi appena sai la risposta!";
-  status.style.color = "#00f0ff";
+  if (btn) btn.classList.remove("disabled");
+  if (status) {
+    status.textContent = "Buzzer Pronto! Premi appena sai la risposta!";
+    status.style.color = "#00f0ff";
+  }
 });
 
 socket.on("update_players", (players) => {
@@ -142,8 +161,8 @@ socket.on("update_players", (players) => {
 
   const me = players.find((p) => p.name === myPlayerName);
   if (me) {
-    document.getElementById("player-score-display").textContent =
-      `${me.score} PT`;
+    const scoreEl = document.getElementById("player-score-display");
+    if (scoreEl) scoreEl.textContent = `${me.score} PT`;
   }
 });
 
@@ -152,20 +171,23 @@ function modifyScore(playerName, delta) {
 }
 
 // ==================== RENDERING UI ====================
-function updateViews(state) {
-  if (!GAME_DATA || GAME_DATA.length === 0) return;
+function updateViews() {
+  if (!GAME_DATA_LOCAL || GAME_DATA_LOCAL.length === 0) return;
 
-  const round = GAME_DATA[roundIdx];
+  const round = GAME_DATA_LOCAL[currentGameState.currentRound];
+  if (!round) return;
+
   const validSubs = round.submissions.filter(
     (s) => s.player && s.player !== "a a",
   );
-  const sub = validSubs[subIdx];
+  const sub = validSubs[currentGameState.currentSubmission] || validSubs[0];
+  if (!sub) return;
 
-  // Host
+  // 1. Schermo Host
   document.getElementById("host-round-badge").textContent =
-    `Round ${round.round} / ${GAME_DATA.length}`;
+    `Round ${round.round} / ${GAME_DATA_LOCAL.length}`;
   document.getElementById("host-card-counter").textContent =
-    `Scheda ${subIdx + 1} di ${validSubs.length}`;
+    `Scheda ${currentGameState.currentSubmission + 1} di ${validSubs.length}`;
   document.getElementById("host-story").textContent = round.story;
   document.getElementById("host-ans-1").textContent = sub.top3[0] || "---";
   document.getElementById("host-ans-2").textContent = sub.top3[1] || "---";
@@ -173,7 +195,7 @@ function updateViews(state) {
   document.getElementById("host-ans-meme").textContent = sub.meme || "---";
   document.getElementById("host-author-name").textContent = sub.player;
 
-  if (state.isMemeRevealed) {
+  if (currentGameState.isMemeRevealed) {
     document.getElementById("host-btn-meme").classList.add("hidden");
     document.getElementById("host-meme-box").classList.remove("hidden");
   } else {
@@ -181,7 +203,7 @@ function updateViews(state) {
     document.getElementById("host-meme-box").classList.add("hidden");
   }
 
-  if (state.isAuthorRevealed) {
+  if (currentGameState.isAuthorRevealed) {
     document.getElementById("host-btn-author").classList.add("hidden");
     document.getElementById("host-author-box").classList.remove("hidden");
   } else {
@@ -189,11 +211,11 @@ function updateViews(state) {
     document.getElementById("host-author-box").classList.add("hidden");
   }
 
-  // Regia
+  // 2. Pannello Regia
   document.getElementById("regia-round-title").textContent =
-    `Round ${round.round}: ${round.story.substring(0, 45)}...`;
+    `Round ${round.round}: ${round.story.substring(0, 50)}...`;
   document.getElementById("regia-card-counter").textContent =
-    `Scheda ${subIdx + 1} / ${validSubs.length}`;
+    `Scheda ${currentGameState.currentSubmission + 1} / ${validSubs.length}`;
   document.getElementById("regia-author-name").textContent = sub.player;
   document.getElementById("regia-ans-1").textContent = sub.top3[0] || "---";
   document.getElementById("regia-ans-2").textContent = sub.top3[1] || "---";
@@ -204,6 +226,7 @@ function updateViews(state) {
 function renderScoreboards() {
   const hostBoard = document.getElementById("host-scoreboard");
   const regiaBoard = document.getElementById("regia-scoreboard");
+  if (!hostBoard || !regiaBoard) return;
 
   hostBoard.innerHTML = "";
   regiaBoard.innerHTML = "";
@@ -229,3 +252,8 @@ function renderScoreboards() {
     regiaBoard.appendChild(c2);
   });
 }
+
+// Inizializza subito con i dati locali se già caricati
+document.addEventListener("DOMContentLoaded", () => {
+  updateViews();
+});
