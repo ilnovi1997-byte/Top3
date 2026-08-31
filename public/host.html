@@ -10,12 +10,28 @@
 <body>
 
   <div class="container host-container">
-    <!-- Header -->
+    <!-- Header con QR Code per Join Rapido -->
     <header class="game-header">
-      <div class="round-badge" id="round-badge">Caricamento...</div>
-      <div id="buzzer-banner" class="buzzer-banner hidden">
-        🚨 HA PRENOTATO: <span id="buzzer-winner" class="glow-yellow">---</span>
+      <div class="header-left">
+        <div class="round-badge" id="round-badge">Caricamento...</div>
+        <div id="buzzer-banner" class="buzzer-banner hidden">
+          🚨 HA PRENOTATO: <span id="buzzer-winner" class="glow-yellow">---</span>
+        </div>
       </div>
+
+      <!-- BOX QR CODE SMARTPHONE -->
+      <div class="qr-box">
+        <img 
+          src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://top3-6lt6.onrender.com&bgcolor=ffffff&color=000000&margin=2" 
+          alt="QR Code Gioco" 
+          class="qr-image"
+        />
+        <div class="qr-info">
+          <span class="qr-tag">INQUADRA PER GIOCARE</span>
+          <span class="qr-link">top3-6lt6.onrender.com</span>
+        </div>
+      </div>
+
       <div class="nav-controls">
         <button class="btn btn-secondary" onclick="prevCard()">◀ Prec</button>
         <span id="card-counter">1 / 18</span>

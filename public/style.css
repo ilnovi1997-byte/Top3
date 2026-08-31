@@ -430,3 +430,48 @@ input[type="text"]:focus, select:focus {
   0% { transform: scale(1); }
   100% { transform: scale(1.05); }
 }
+/* Stile Box QR Code */
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.qr-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  padding: 8px 14px;
+  border-radius: 12px;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.15);
+}
+
+.qr-image {
+  width: 70px;
+  height: 70px;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 4px;
+}
+
+.qr-info {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  gap: 2px;
+}
+
+.qr-tag {
+  font-size: 0.75rem;
+  font-weight: 900;
+  color: var(--accent-blue);
+  letter-spacing: 1px;
+}
+
+.qr-link {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
