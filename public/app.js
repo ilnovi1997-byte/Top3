@@ -1,13 +1,12 @@
 const socket = io();
 
-// Stato locale
 let GAME_DATA = [];
 let roundIdx = 0;
 let subIdx = 0;
 let myPlayerName = "";
 let playersList = [];
 
-// Ricezione Dati Iniziali
+// Ricezione Stato Iniziale dal Server
 socket.on("init_game", (data) => {
   GAME_DATA = data.gameData;
   roundIdx = data.state.currentRound;
@@ -15,34 +14,18 @@ socket.on("init_game", (data) => {
   updateViews(data.state);
 });
 
-// Switch tra Giocatore, Schermo Host e Regia
-function switchRole(role) {
+// Gestione Navigazione Viste
+function goToView(viewId) {
   document
     .querySelectorAll(".view-section")
     .forEach((el) => el.classList.add("hidden"));
-  document
-    .querySelectorAll(".role-btn")
-    .forEach((el) => el.classList.remove("active"));
-
-  if (role === "player") {
-    document.getElementById("view-player").classList.remove("hidden");
-    document
-      .querySelector("button[onclick=\"switchRole('player')\"]")
-      .classList.add("active");
-  } else if (role === "host") {
-    document.getElementById("view-host").classList.remove("hidden");
-    document
-      .querySelector("button[onclick=\"switchRole('host')\"]")
-      .classList.add("active");
-  } else if (role === "regia") {
-    document.getElementById("view-regia").classList.remove("hidden");
-    document
-      .querySelector("button[onclick=\"switchRole('regia')\"]")
-      .classList.add("active");
+  const target = document.getElementById(`view-${viewId}`);
+  if (target) {
+    target.classList.remove("hidden");
   }
 }
 
-// ==================== LOGICA GIOCATORE ====================
+// ==================== CONTROLLER GIOCATORE ====================
 function joinGame() {
   const input = document.getElementById("player-name-input");
   const name = input.value.trim();
@@ -62,7 +45,7 @@ function hitBuzzer() {
   socket.emit("press_buzzer");
 }
 
-// ==================== NAVIGAZIONE E SYNC CARTE ====================
+// ==================== NAVIGAZIONE CARTE E SYNC ====================
 function nextCard() {
   const round = GAME_DATA[roundIdx];
   const validSubs = round.submissions.filter(
@@ -103,7 +86,7 @@ function triggerBuzzerReset() {
   socket.emit("reset_buzzer");
 }
 
-// ==================== EVENTI SOCKET ====================
+// ==================== EVENTI SOCKET.IO ====================
 socket.on("card_updated", (state) => {
   roundIdx = state.currentRound;
   subIdx = state.currentSubmission;
@@ -143,11 +126,9 @@ socket.on("buzzer_locked", ({ player }) => {
 });
 
 socket.on("buzzer_reset", () => {
-  // Host & Regia
   document.getElementById("host-buzzer-banner").classList.add("hidden");
   document.getElementById("regia-buzzer-alert").classList.add("hidden");
 
-  // Giocatore
   const btn = document.getElementById("buzzer-btn");
   const status = document.getElementById("player-status-msg");
   btn.classList.remove("disabled");
@@ -180,7 +161,7 @@ function updateViews(state) {
   );
   const sub = validSubs[subIdx];
 
-  // 1. Aggiorna Host
+  // Host
   document.getElementById("host-round-badge").textContent =
     `Round ${round.round} / ${GAME_DATA.length}`;
   document.getElementById("host-card-counter").textContent =
@@ -208,9 +189,9 @@ function updateViews(state) {
     document.getElementById("host-author-box").classList.add("hidden");
   }
 
-  // 2. Aggiorna Regia (Mostra tutto in chiaro)
+  // Regia
   document.getElementById("regia-round-title").textContent =
-    `Round ${round.round}: ${round.story.substring(0, 50)}...`;
+    `Round ${round.round}: ${round.story.substring(0, 45)}...`;
   document.getElementById("regia-card-counter").textContent =
     `Scheda ${subIdx + 1} / ${validSubs.length}`;
   document.getElementById("regia-author-name").textContent = sub.player;

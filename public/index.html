@@ -9,17 +9,54 @@
 </head>
 <body>
 
-  <!-- BARRA DI NAVIGAZIONE RUOLI (In alto a destra) -->
-  <nav class="role-nav">
-    <button class="role-btn active" onclick="switchRole('player')">📱 Giocatore</button>
-    <button class="role-btn" onclick="switchRole('host')">📺 Schermo Host</button>
-    <button class="role-btn" onclick="switchRole('regia')">🎬 Regia</button>
-  </nav>
+  <!-- ==================== HOME / LANDING SELEZIONE RUOLO ==================== -->
+  <main id="view-home" class="view-section home-section">
+    <div class="home-card card">
+      <h1 class="glow-text main-title">TOP 3 & MEME</h1>
+      <p class="subtitle">Il Party Game con i segreti e le risposte del gruppo</p>
 
-  <!-- ==================== VISTA 1: GIOCATORE ==================== -->
-  <main id="view-player" class="view-section">
+      <!-- QR Code Centrale -->
+      <div class="home-qr-container">
+        <div class="home-qr-box">
+          <img 
+            src="https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=https://top3-6lt6.onrender.com&bgcolor=ffffff&color=000000&margin=2" 
+            alt="Inquadra per Giocare" 
+            class="home-qr-img"
+          />
+        </div>
+        <p class="home-qr-instruction">Inquadra con la fotocamera del cellulare</p>
+        <span class="home-link-badge">top3-6lt6.onrender.com</span>
+      </div>
+
+      <!-- Scelta Ruolo -->
+      <div class="home-roles-grid">
+        <button class="role-select-card role-card-player" onclick="goToView('player')">
+          <span class="role-icon">📱</span>
+          <h3>Giocatore</h3>
+          <p>Usa il telefono come controller e buzzer</p>
+        </button>
+
+        <button class="role-select-card role-card-host" onclick="goToView('host')">
+          <span class="role-icon">📺</span>
+          <h3>Schermo Host</h3>
+          <p>Display per TV, PC o proiettore</p>
+        </button>
+
+        <button class="role-select-card role-card-regia" onclick="goToView('regia')">
+          <span class="role-icon">🎬</span>
+          <h3>Regia</h3>
+          <p>Pannello segreto con tutti gli autori</p>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- ==================== VISTA 1: GIOCATORE (CONTROLLER) ==================== -->
+  <main id="view-player" class="view-section hidden">
+    <button class="btn-back-home" onclick="goToView('home')">🏠 Home</button>
+
     <div id="player-login-box" class="player-container">
-      <h1 class="glow-text">TOP 3 & MEME</h1>
+      <h1 class="glow-text">BENVENUTO</h1>
       <p class="subtitle">Inserisci il tuo nome per giocare dal telefono</p>
       <div class="input-group">
         <input type="text" id="player-name-input" placeholder="Il tuo nome..." maxlength="15" />
@@ -47,21 +84,10 @@
     <div class="container">
       <header class="game-header">
         <div class="header-left">
+          <button class="btn btn-secondary btn-sm" onclick="goToView('home')">🏠 Esci</button>
           <div class="round-badge" id="host-round-badge">Round 1/22</div>
           <div id="host-buzzer-banner" class="buzzer-banner hidden">
             🚨 PRENOTATO DA: <span id="host-buzzer-winner" class="glow-yellow">---</span>
-          </div>
-        </div>
-
-        <div class="qr-box">
-          <img 
-            src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://top3-6lt6.onrender.com&bgcolor=ffffff&color=000000&margin=2" 
-            alt="QR Code" 
-            class="qr-image"
-          />
-          <div class="qr-info">
-            <span class="qr-tag">INQUADRA COL TELEFONO</span>
-            <span class="qr-link">top3-6lt6.onrender.com</span>
           </div>
         </div>
 
@@ -72,12 +98,10 @@
         </div>
       </header>
 
-      <!-- Storia del Round -->
       <div class="card question-card">
         <h2 id="host-story">---</h2>
       </div>
 
-      <!-- Risposte -->
       <div class="card submission-card">
         <div class="answers-grid">
           <div class="answer-box top-answer"><span class="badge">1</span><p id="host-ans-1">---</p></div>
@@ -85,7 +109,6 @@
           <div class="answer-box top-answer"><span class="badge">3</span><p id="host-ans-3">---</p></div>
         </div>
 
-        <!-- Risposta Meme -->
         <div class="meme-container">
           <button class="btn btn-meme" id="host-btn-meme" onclick="triggerMemeReveal()">🎭 Rivela Risposta MEME</button>
           <div id="host-meme-box" class="answer-box meme-answer hidden">
@@ -94,7 +117,6 @@
           </div>
         </div>
 
-        <!-- Reveal Autore -->
         <div class="reveal-container">
           <div class="btn-group">
             <button class="btn btn-secondary" onclick="triggerBuzzerReset()">🔄 Reset Buzzer</button>
@@ -107,7 +129,6 @@
         </div>
       </div>
 
-      <!-- Tabellone Punteggi -->
       <div class="card scoreboard-card">
         <h3>Classifica Giocatori</h3>
         <div id="host-scoreboard" class="scoreboard-grid"></div>
@@ -115,11 +136,12 @@
     </div>
   </main>
 
-  <!-- ==================== VISTA 3: REGIA (SOLO GAME MASTER) ==================== -->
+  <!-- ==================== VISTA 3: REGIA (GAME MASTER) ==================== -->
   <main id="view-regia" class="view-section hidden">
     <div class="container">
       <div class="regia-header">
         <div class="regia-title-box">
+          <button class="btn btn-secondary btn-sm" onclick="goToView('home')">🏠 Esci</button>
           <span class="regia-badge">PANNELLO REGIA</span>
           <h2 id="regia-round-title">Round 1/22</h2>
         </div>
@@ -131,13 +153,11 @@
         </div>
       </div>
 
-      <!-- Alert Buzzer in Regia -->
       <div id="regia-buzzer-alert" class="regia-buzzer-box hidden">
         <span>🚨 Ha prenotato: <strong id="regia-buzzer-player" class="glow-yellow">---</strong></span>
         <button class="btn btn-sm btn-secondary" onclick="triggerBuzzerReset()">Reset Buzzer</button>
       </div>
 
-      <!-- Spoiler Completo Autore & Risposte -->
       <div class="card regia-spoiler-card">
         <div class="regia-spoiler-header">
           <span>AUTORE DI QUESTA SCHEDA:</span>
@@ -157,7 +177,6 @@
         </div>
       </div>
 
-      <!-- Gestione Rapida Punti Giocatori -->
       <div class="card scoreboard-card">
         <h3>Assegna / Rimuovi Punti</h3>
         <div id="regia-scoreboard" class="scoreboard-grid"></div>
