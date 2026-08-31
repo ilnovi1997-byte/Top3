@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Party Game - Top 3 & Meme</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- BARRA DI NAVIGAZIONE RUOLI (In alto a destra) -->
+  <nav class="role-nav">
+    <button class="role-btn active" onclick="switchRole('player')">📱 Giocatore</button>
+    <button class="role-btn" onclick="switchRole('host')">📺 Schermo Host</button>
+    <button class="role-btn" onclick="switchRole('regia')">🎬 Regia</button>
+  </nav>
+
+  <!-- ==================== VISTA 1: GIOCATORE ==================== -->
+  <main id="view-player" class="view-section">
+    <div id="player-login-box" class="player-container">
+      <h1 class="glow-text">TOP 3 & MEME</h1>
+      <p class="subtitle">Inserisci il tuo nome per giocare dal telefono</p>
+      <div class="input-group">
+        <input type="text" id="player-name-input" placeholder="Il tuo nome..." maxlength="15" />
+        <button class="btn btn-primary" onclick="joinGame()">ENTRA 🎮</button>
+      </div>
+    </div>
+
+    <div id="player-game-box" class="player-container hidden">
+      <div class="player-header">
+        <span id="player-name-display" class="badge">---</span>
+        <span id="player-score-display" class="score-badge">0 PT</span>
+      </div>
+
+      <div class="buzzer-wrapper">
+        <button id="buzzer-btn" class="buzzer-btn" onclick="hitBuzzer()">
+          <span>PRENOTA!</span>
+        </button>
+      </div>
+      <p id="player-status-msg" class="status-msg">Guarda lo schermo principale...</p>
+    </div>
+  </main>
+
+  <!-- ==================== VISTA 2: SCHERMO HOST ==================== -->
+  <main id="view-host" class="view-section hidden">
+    <div class="container">
+      <header class="game-header">
+        <div class="header-left">
+          <div class="round-badge" id="host-round-badge">Round 1/22</div>
+          <div id="host-buzzer-banner" class="buzzer-banner hidden">
+            🚨 PRENOTATO DA: <span id="host-buzzer-winner" class="glow-yellow">---</span>
+          </div>
+        </div>
+
+        <div class="qr-box">
+          <img 
+            src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://top3-6lt6.onrender.com&bgcolor=ffffff&color=000000&margin=2" 
+            alt="QR Code" 
+            class="qr-image"
+          />
+          <div class="qr-info">
+            <span class="qr-tag">INQUADRA COL TELEFONO</span>
+            <span class="qr-link">top3-6lt6.onrender.com</span>
+          </div>
+        </div>
+
+        <div class="nav-controls">
+          <button class="btn btn-secondary" onclick="prevCard()">◀ Prec</button>
+          <span id="host-card-counter">1 / 18</span>
+          <button class="btn btn-secondary" onclick="nextCard()">Succ ▶</button>
+        </div>
+      </header>
+
+      <!-- Storia del Round -->
+      <div class="card question-card">
+        <h2 id="host-story">---</h2>
+      </div>
+
+      <!-- Risposte -->
+      <div class="card submission-card">
+        <div class="answers-grid">
+          <div class="answer-box top-answer"><span class="badge">1</span><p id="host-ans-1">---</p></div>
+          <div class="answer-box top-answer"><span class="badge">2</span><p id="host-ans-2">---</p></div>
+          <div class="answer-box top-answer"><span class="badge">3</span><p id="host-ans-3">---</p></div>
+        </div>
+
+        <!-- Risposta Meme -->
+        <div class="meme-container">
+          <button class="btn btn-meme" id="host-btn-meme" onclick="triggerMemeReveal()">🎭 Rivela Risposta MEME</button>
+          <div id="host-meme-box" class="answer-box meme-answer hidden">
+            <span class="badge meme-badge">MEME / FLOP</span>
+            <p id="host-ans-meme">---</p>
+          </div>
+        </div>
+
+        <!-- Reveal Autore -->
+        <div class="reveal-container">
+          <div class="btn-group">
+            <button class="btn btn-secondary" onclick="triggerBuzzerReset()">🔄 Reset Buzzer</button>
+            <button class="btn btn-reveal" id="host-btn-author" onclick="triggerAuthorReveal()">❓ Chi l'ha Scritto?</button>
+          </div>
+          <div id="host-author-box" class="author-display hidden">
+            <span class="written-by">Scritto da:</span>
+            <h2 id="host-author-name" class="glow-green">---</h2>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabellone Punteggi -->
+      <div class="card scoreboard-card">
+        <h3>Classifica Giocatori</h3>
+        <div id="host-scoreboard" class="scoreboard-grid"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ==================== VISTA 3: REGIA (SOLO GAME MASTER) ==================== -->
+  <main id="view-regia" class="view-section hidden">
+    <div class="container">
+      <div class="regia-header">
+        <div class="regia-title-box">
+          <span class="regia-badge">PANNELLO REGIA</span>
+          <h2 id="regia-round-title">Round 1/22</h2>
+        </div>
+        
+        <div class="regia-controls">
+          <button class="btn btn-secondary" onclick="prevCard()">◀ Scheda Prec</button>
+          <span id="regia-card-counter" class="regia-counter">1 / 18</span>
+          <button class="btn btn-secondary" onclick="nextCard()">Scheda Succ ▶</button>
+        </div>
+      </div>
+
+      <!-- Alert Buzzer in Regia -->
+      <div id="regia-buzzer-alert" class="regia-buzzer-box hidden">
+        <span>🚨 Ha prenotato: <strong id="regia-buzzer-player" class="glow-yellow">---</strong></span>
+        <button class="btn btn-sm btn-secondary" onclick="triggerBuzzerReset()">Reset Buzzer</button>
+      </div>
+
+      <!-- Spoiler Completo Autore & Risposte -->
+      <div class="card regia-spoiler-card">
+        <div class="regia-spoiler-header">
+          <span>AUTORE DI QUESTA SCHEDA:</span>
+          <h1 id="regia-author-name" class="glow-green">Nome Autore</h1>
+        </div>
+
+        <div class="regia-answers-list">
+          <div class="regia-ans-item"><strong>Top 1:</strong> <span id="regia-ans-1">---</span></div>
+          <div class="regia-ans-item"><strong>Top 2:</strong> <span id="regia-ans-2">---</span></div>
+          <div class="regia-ans-item"><strong>Top 3:</strong> <span id="regia-ans-3">---</span></div>
+          <div class="regia-ans-item regia-meme-item"><strong>Meme:</strong> <span id="regia-ans-meme">---</span></div>
+        </div>
+
+        <div class="regia-actions">
+          <button class="btn btn-meme" onclick="triggerMemeReveal()">Mostra Meme su Host</button>
+          <button class="btn btn-reveal" onclick="triggerAuthorReveal()">Rivela Autore su Host</button>
+        </div>
+      </div>
+
+      <!-- Gestione Rapida Punti Giocatori -->
+      <div class="card scoreboard-card">
+        <h3>Assegna / Rimuovi Punti</h3>
+        <div id="regia-scoreboard" class="scoreboard-grid"></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="gameData.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
