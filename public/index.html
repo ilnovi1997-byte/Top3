@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Party Game - Top 3 & Meme</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div id="setup-screen" class="container">
+    <div class="card setup-card">
+      <h1 class="glow-text">PARTY GAME</h1>
+      <p class="subtitle">Top 3 & Risposte Meme</p>
+
+      <div class="setup-section">
+        <h3>Aggiungi Giocatori / Squadre</h3>
+        <div class="input-group">
+          <input type="text" id="player-input" placeholder="Nome squadra o giocatore..." />
+          <button class="btn btn-primary" onclick="addTeam()">Aggiungi</button>
+        </div>
+        <div id="teams-list" class="tags-container"></div>
+      </div>
+
+      <div class="setup-section">
+        <label for="round-select"><strong>Seleziona Round di partenza:</strong></label>
+        <select id="round-select"></select>
+      </div>
+
+      <button class="btn btn-start" onclick="startGame()">INIZIA LA PARTITA 🚀</button>
+    </div>
+  </div>
+
+  <div id="game-screen" class="container hidden">
+    <header class="game-header">
+      <div class="round-badge" id="round-badge">Round 1/22</div>
+      <div class="timer-box" onclick="toggleTimer()">⏱️ <span id="timer-display">30</span>s</div>
+      <button class="btn btn-sm btn-secondary" onclick="exitToSetup()">Esci</button>
+    </header>
+
+    <div class="card question-card">
+      <h2 id="round-story">Caricamento domanda...</h2>
+    </div>
+
+    <div class="game-area">
+      <div class="nav-controls">
+        <button class="btn btn-secondary" onclick="prevSubmission()">◀ Precedente</button>
+        <span id="submission-counter">Scheda 1 di 18</span>
+        <button class="btn btn-secondary" onclick="nextSubmission()">Successiva ▶</button>
+      </div>
+
+      <div class="card submission-card">
+        <h3>Risposte del Giocatore Misterioso:</h3>
+        
+        <div class="answers-grid">
+          <div class="answer-box top-answer">
+            <span class="badge">1</span>
+            <p id="ans-1">---</p>
+          </div>
+          <div class="answer-box top-answer">
+            <span class="badge">2</span>
+            <p id="ans-2">---</p>
+          </div>
+          <div class="answer-box top-answer">
+            <span class="badge">3</span>
+            <p id="ans-3">---</p>
+          </div>
+        </div>
+
+        <div class="meme-container">
+          <button class="btn btn-meme" id="btn-reveal-meme" onclick="revealMeme()">🎭 Rivela Risposta MEME</button>
+          <div id="meme-box" class="answer-box meme-answer hidden">
+            <span class="badge meme-badge">MEME / FLOP</span>
+            <p id="ans-meme">---</p>
+          </div>
+        </div>
+
+        <div class="reveal-container">
+          <button class="btn btn-reveal" id="btn-reveal-author" onclick="revealAuthor()">❓ Chi ha scritto queste risposte?</button>
+          <div id="author-box" class="author-display hidden">
+            <span class="written-by">Scritto da:</span>
+            <h2 id="author-name" class="glow-green">Nome Autore</h2>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card scoreboard-card">
+      <h3>Tabellone Punteggi</h3>
+      <div id="scoreboard" class="scoreboard-grid"></div>
+    </div>
+  </div>
+
+  <script src="gameData.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
