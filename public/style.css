@@ -1,6 +1,10 @@
+/* ==========================================================================
+   PARTY GAME: TOP 3 & MEME - STILE COMPLETO
+   ========================================================================== */
+
 :root {
   --bg-color: #0d0f18;
-  --card-bg: #171b29;
+  --card-bg: rgba(23, 27, 41, 0.88);
   --accent: #ff007f;
   --accent-blue: #00f0ff;
   --accent-yellow: #ffe600;
@@ -18,14 +22,20 @@
 }
 
 body {
-  background-color: var(--bg-color);
-  color: var(--text);
+  margin: 0;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 15px;
+  color: var(--text);
+  
+  /* Sfondo con immagine e overlay scuro per leggibilità */
+  background: 
+    linear-gradient(rgba(13, 15, 24, 0.82), rgba(13, 15, 24, 0.90)),
+    url('bg.png') no-repeat center center fixed;
+  background-size: cover;
 }
 
 .hidden {
@@ -35,18 +45,22 @@ body {
 .container {
   width: 100%;
   max-width: 1000px;
+  position: relative;
 }
 
+/* ==================== EFFETTI CARD & GLASSMORPHISM ==================== */
 .card {
-  background: var(--card-bg);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--card-bg) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
   border-radius: var(--radius);
   padding: 24px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
   margin-bottom: 20px;
 }
 
-/* ==================== HOME STYLES ==================== */
+/* ==================== HOME / LANDING SELEZIONE RUOLO ==================== */
 .home-section {
   width: 100%;
   max-width: 780px;
@@ -166,9 +180,10 @@ body {
   border-radius: 12px;
   font-weight: 700;
   cursor: pointer;
+  backdrop-filter: blur(8px);
 }
 
-/* ==================== GLOW & BUTTONS ==================== */
+/* ==================== TYPOGRAPHY & GLOW ==================== */
 .glow-text {
   font-weight: 900;
   color: var(--accent-blue);
@@ -191,6 +206,7 @@ body {
   font-weight: 600;
 }
 
+/* ==================== PULSANTI ==================== */
 .btn {
   border: none;
   cursor: pointer;
@@ -233,14 +249,23 @@ body {
 
 .btn:hover {
   filter: brightness(1.15);
+  transform: translateY(-1px);
 }
 
-/* ==================== HOST & REGIA LAYOUT ==================== */
+.btn-active-revealed {
+  background: var(--accent-green) !important;
+  color: #000 !important;
+  font-weight: 900 !important;
+}
+
+/* ==================== SCHERMO HOST ==================== */
 .game-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  gap: 15px;
+  flex-wrap: wrap;
 }
 
 .header-left {
@@ -257,21 +282,28 @@ body {
   font-weight: 800;
 }
 
-.buzzer-banner {
-  background: rgba(255, 230, 0, 0.2);
-  border: 2px solid var(--accent-yellow);
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-weight: 900;
-  animation: pulse 1s infinite alternate;
-}
-
 .nav-controls {
   display: flex;
   align-items: center;
   gap: 10px;
   font-weight: 600;
   color: var(--text-muted);
+}
+
+.question-card h2 {
+  font-size: 1.25rem;
+  line-height: 1.5;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ==================== OSCURAMENTO RISPOSTE & BLUR ==================== */
+.reveal-hint-bar {
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 12px;
 }
 
 .answers-grid {
@@ -285,11 +317,59 @@ body {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
-  padding: 20px;
+  padding: 22px;
   position: relative;
-  min-height: 90px;
+  min-height: 100px;
   display: flex;
   align-items: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.answer-box:hover {
+  border-color: rgba(0, 240, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.answer-box p {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #fff;
+  transition: filter 0.3s ease, opacity 0.3s ease;
+}
+
+/* Stato Blur / Oscurato */
+.blur-hidden p,
+.blur-hidden h2,
+.blur-hidden .written-by {
+  filter: blur(14px);
+  opacity: 0.05;
+  user-select: none;
+}
+
+.blur-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(13, 15, 24, 0.85);
+  backdrop-filter: blur(4px);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--accent-blue);
+  letter-spacing: 1px;
+  text-align: center;
+  padding: 10px;
+  z-index: 5;
+}
+
+.blur-hidden .blur-overlay {
+  display: flex;
 }
 
 .badge {
@@ -302,10 +382,15 @@ body {
   font-size: 0.8rem;
   padding: 2px 8px;
   border-radius: 10px;
+  z-index: 6;
 }
 
 .meme-badge {
   background: var(--accent-yellow);
+}
+
+.meme-wrapper, .author-wrapper {
+  margin-top: 15px;
 }
 
 .meme-answer {
@@ -313,27 +398,102 @@ body {
   background: rgba(255, 230, 0, 0.05);
 }
 
-.meme-container, .reveal-container {
-  margin-top: 15px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.btn-group {
-  display: flex;
-  gap: 10px;
-}
-
 .author-display {
   text-align: center;
-  padding: 15px;
+  padding: 20px;
   border-radius: 12px;
   background: rgba(0, 255, 102, 0.05);
-  border: 1px solid var(--accent-green);
+  border: 2px dashed var(--accent-green);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
 }
 
-/* Scoreboard */
+.author-display:hover {
+  background: rgba(0, 255, 102, 0.1);
+}
+
+.blur-hidden.author-display {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.written-by {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+/* ==================== CODA BUZZER ==================== */
+.buzzer-queue-card {
+  border: 2px solid var(--accent-yellow);
+  background: rgba(255, 230, 0, 0.04);
+  margin-bottom: 20px;
+}
+
+.queue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.queue-header h3 {
+  color: var(--accent-yellow);
+  font-size: 1.1rem;
+}
+
+.queue-btn-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.buzzer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.buzzer-queue-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 10px 16px;
+  border-radius: 10px;
+  border-left: 4px solid rgba(255, 255, 255, 0.2);
+}
+
+.buzzer-queue-item.active-turn {
+  background: rgba(0, 255, 102, 0.1);
+  border-left: 5px solid var(--accent-green);
+  box-shadow: 0 0 15px rgba(0, 255, 102, 0.2);
+}
+
+.queue-pos {
+  font-weight: 900;
+  font-size: 1.1rem;
+  color: var(--accent-blue);
+  min-width: 25px;
+}
+
+.queue-name {
+  font-weight: 800;
+  font-size: 1.15rem;
+  flex: 1;
+}
+
+.turn-badge {
+  background: var(--accent-green);
+  color: #000;
+  font-weight: 900;
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 8px;
+}
+
+/* ==================== TABELLONE PUNTEGGI ==================== */
 .scoreboard-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -382,7 +542,7 @@ body {
   text-align: center;
 }
 
-/* ==================== GIOCATORE / BUZZER ==================== */
+/* ==================== CONTROLLER SMARTPHONE ==================== */
 .player-container {
   width: 100%;
   max-width: 420px;
@@ -457,12 +617,14 @@ input[type="text"] {
   color: var(--text-muted);
 }
 
-/* ==================== REGIA ==================== */
+/* ==================== PANNELLO REGIA ==================== */
 .regia-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 15px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .regia-title-box {
@@ -486,17 +648,6 @@ input[type="text"] {
   margin: 0 10px;
 }
 
-.regia-buzzer-box {
-  background: rgba(255, 230, 0, 0.15);
-  border: 2px solid var(--accent-yellow);
-  padding: 12px 20px;
-  border-radius: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
 .regia-spoiler-card {
   border: 2px solid var(--accent-green);
 }
@@ -514,198 +665,6 @@ input[type="text"] {
 }
 
 .regia-ans-item {
-  background: rgba(255, 255, 255, 0.04);
-  padding: 10px 14px;
-  border-radius: 8px;
-}
-
-.regia-meme-item {
-  border-left: 4px solid var(--accent-yellow);
-  background: rgba(255, 230, 0, 0.08);
-}
-
-.regia-actions {
-  display: flex;
-  gap: 12px;
-}
-
-@keyframes pulse {
-  0% { transform: scale(1); }
-  100% { transform: scale(1.04); }
-}
-/* Stile Box Coda Buzzer */
-.buzzer-queue-card {
-  border: 2px solid var(--accent-yellow);
-  background: rgba(255, 230, 0, 0.04);
-  margin-bottom: 20px;
-}
-
-.queue-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.queue-header h3 {
-  color: var(--accent-yellow);
-  font-size: 1.1rem;
-}
-
-.queue-btn-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.buzzer-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.buzzer-queue-item {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  background: rgba(255, 255, 255, 0.04);
-  padding: 10px 16px;
-  border-radius: 10px;
-  border-left: 4px solid rgba(255, 255, 255, 0.2);
-}
-
-.buzzer-queue-item.active-turn {
-  background: rgba(0, 255, 102, 0.1);
-  border-left: 5px solid var(--accent-green);
-  box-shadow: 0 0 15px rgba(0, 255, 102, 0.2);
-}
-
-.queue-pos {
-  font-weight: 900;
-  font-size: 1.1rem;
-  color: var(--accent-blue);
-  min-width: 25px;
-}
-
-.queue-name {
-  font-weight: 800;
-  font-size: 1.15rem;
-  flex: 1;
-}
-
-.turn-badge {
-  background: var(--accent-green);
-  color: #000;
-  font-weight: 900;
-  font-size: 0.75rem;
-  padding: 3px 8px;
-  border-radius: 8px;
-}
-
-.queue-quick-score {
-  display: flex;
-  gap: 6px;
-}
-/* ==================== OSCURAMENTO RISPOSTE & BLUR ==================== */
-.reveal-hint-bar {
-  text-align: center;
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--text-muted);
-  margin-bottom: 12px;
-}
-
-.answer-box {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 22px;
-  position: relative;
-  min-height: 100px;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  overflow: hidden;
-  transition: all 0.2s ease;
-}
-
-.answer-box:hover {
-  border-color: rgba(0, 240, 255, 0.5);
-  transform: translateY(-2px);
-}
-
-.answer-box p {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #fff;
-  transition: filter 0.3s ease, opacity 0.3s ease;
-}
-
-/* Quando la card è oscurata */
-.blur-hidden p,
-.blur-hidden h2,
-.blur-hidden .written-by {
-  filter: blur(14px);
-  opacity: 0.05;
-  user-select: none;
-}
-
-.blur-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(13, 15, 24, 0.85);
-  backdrop-filter: blur(4px);
-  display: none;
-  justify-content: center;
-  align-items: center;
-  font-weight: 800;
-  font-size: 1rem;
-  color: var(--accent-blue);
-  letter-spacing: 1px;
-  text-align: center;
-  padding: 10px;
-  z-index: 5;
-}
-
-.blur-hidden .blur-overlay {
-  display: flex;
-}
-
-.meme-wrapper, .author-wrapper {
-  margin-top: 15px;
-}
-
-.author-display {
-  text-align: center;
-  padding: 20px;
-  border-radius: 12px;
-  background: rgba(0, 255, 102, 0.05);
-  border: 2px dashed var(--accent-green);
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.2s ease;
-}
-
-.author-display:hover {
-  background: rgba(0, 255, 102, 0.1);
-}
-
-.blur-hidden .author-display {
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.btn-active-revealed {
-  background: var(--accent-green) !important;
-  color: #000 !important;
-  font-weight: 900 !important;
-}
-
-.regia-ans-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -717,4 +676,20 @@ input[type="text"] {
 
 .regia-ans-text {
   flex: 1;
+}
+
+.regia-meme-item {
+  border-left: 4px solid var(--accent-yellow);
+  background: rgba(255, 230, 0, 0.08);
+}
+
+.regia-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.04); }
 }
