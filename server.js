@@ -16,55 +16,68 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// Stato Globale
+// Stato globale con controllo granulare dei reveal
 let gameState = {
   currentRound: 0,
   currentSubmission: 0,
-  isMemeRevealed: false,
-  isAuthorRevealed: false,
+  revealed: {
+    ans1: false,
+    ans2: false,
+    ans3: false,
+    meme: false,
+    author: false,
+  },
   isBuzzerActive: true,
-  buzzerQueue: [], // Array ordinato: [{ name, socketId, time }]
+  buzzerQueue: [],
   players: {},
 };
 
 io.on("connection", (socket) => {
-  // Invio stato iniziale
   socket.emit("init_game", {
     gameData: GAME_DATA,
     state: gameState,
   });
 
-  // Login Giocatore
   socket.on("join_game", (playerName) => {
     gameState.players[socket.id] = { name: playerName, score: 0 };
     io.emit("update_players", Object.values(gameState.players));
     socket.emit("joined_successfully", { name: playerName });
   });
 
-  // Cambio scheda / round
+  // Cambio scheda: resetta tutti i reveal a false
   socket.on("change_card", ({ roundIdx, subIdx }) => {
     gameState.currentRound = roundIdx;
     gameState.currentSubmission = subIdx;
-    gameState.isMemeRevealed = false;
-    gameState.isAuthorRevealed = false;
+    gameState.revealed = {
+      ans1: false,
+      ans2: false,
+      ans3: false,
+      meme: false,
+      author: false,
+    };
     gameState.isBuzzerActive = true;
     gameState.buzzerQueue = [];
 
     io.emit("card_updated", gameState);
   });
 
-  // Reveal Meme & Autore
-  socket.on("reveal_meme", () => {
-    gameState.isMemeRevealed = true;
-    io.emit("meme_revealed");
+  // Toggle reveal per singolo elemento (ans1, ans2, ans3, meme, author)
+  socket.on("toggle_reveal", (targetKey) => {
+    if (gameState.revealed.hasOwnProperty(targetKey)) {
+      gameState.revealed[targetKey] = !gameState.revealed[targetKey];
+      io.emit("reveal_updated", gameState.revealed);
+    }
   });
 
-  socket.on("reveal_author", () => {
-    gameState.isAuthorRevealed = true;
-    io.emit("author_revealed");
+  // Rivela tutte le risposte Top 3 insieme
+  socket.on("reveal_all_top3", () => {
+    gameState.revealed.ans1 = true;
+    gameState.revealed.ans2 = true;
+    gameState.revealed.ans3 = true;
+    io.emit("reveal_updated", gameState.revealed);
   });
 
-  // Giocatore preme il Buzzer (Aggiunta in Coda)
+  // Buzzer
   socket.on("press_buzzer", () => {
     if (!gameState.isBuzzerActive || !gameState.players[socket.id]) return;
 
@@ -85,10 +98,9 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Host/Regia passa al prossimo giocatore della coda
   socket.on("pass_buzzer_turn", () => {
     if (gameState.buzzerQueue.length > 0) {
-      gameState.buzzerQueue.shift(); // Rimuove il primo
+      gameState.buzzerQueue.shift();
       io.emit("buzzer_queue_updated", {
         queue: gameState.buzzerQueue,
         firstPlayer:
@@ -99,14 +111,12 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Reset completo del Buzzer
   socket.on("reset_buzzer", () => {
     gameState.isBuzzerActive = true;
     gameState.buzzerQueue = [];
     io.emit("buzzer_reset");
   });
 
-  // Punti
   socket.on("update_score", ({ playerName, delta }) => {
     for (let id in gameState.players) {
       if (gameState.players[id].name === playerName) {

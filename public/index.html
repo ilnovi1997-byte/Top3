@@ -37,13 +37,13 @@
         <button class="role-select-card role-card-host" onclick="goToView('host')">
           <span class="role-icon">📺</span>
           <h3>Schermo Host</h3>
-          <p>Display per TV, PC o proiettore con coda Buzz</p>
+          <p>Display TV con risposte oscurate e reveal manuale</p>
         </button>
 
         <button class="role-select-card role-card-regia" onclick="goToView('regia')">
           <span class="role-icon">🎬</span>
           <h3>Regia</h3>
-          <p>Pannello segreto con tutti gli autori</p>
+          <p>Pannello di controllo completo</p>
         </button>
       </div>
     </div>
@@ -86,6 +86,10 @@
           <div class="round-badge" id="host-round-badge">Round 1/22</div>
         </div>
 
+        <div class="header-actions">
+          <button class="btn btn-primary btn-sm" onclick="triggerRevealAllTop3()">👁️ Rivela Tutte le Top 3</button>
+        </div>
+
         <div class="nav-controls">
           <button class="btn btn-secondary" onclick="prevCard()">◀ Prec</button>
           <span id="host-card-counter">1 / 18</span>
@@ -93,42 +97,58 @@
         </div>
       </header>
 
-      <!-- SEZIONE ORDINE DI BUZZ HOST -->
+      <!-- Box Coda Buzz -->
       <div id="host-buzzer-queue-card" class="card buzzer-queue-card hidden">
         <div class="queue-header">
-          <h3>🚨 ORDINE DI PRENOTAZIONE (BUZZ)</h3>
+          <h3>🚨 ORDINE DI PRENOTAZIONE</h3>
           <div class="queue-btn-actions">
-            <button class="btn btn-secondary btn-sm" onclick="triggerPassBuzzerTurn()">❌ Risposta Sbagliata (Passa al 2°)</button>
+            <button class="btn btn-secondary btn-sm" onclick="triggerPassBuzzerTurn()">❌ Errata (Passa al succ)</button>
             <button class="btn btn-secondary btn-sm" onclick="triggerBuzzerReset()">🔄 Azzera Coda</button>
           </div>
         </div>
         <div id="host-buzzer-list" class="buzzer-list"></div>
       </div>
 
+      <!-- Domanda / Storia -->
       <div class="card question-card">
         <h2 id="host-story">---</h2>
       </div>
 
+      <!-- Risposte con Reveal al Click -->
       <div class="card submission-card">
+        <div class="reveal-hint-bar">💡 Clicca su una card per rivelarla o nasconderla</div>
+        
         <div class="answers-grid">
-          <div class="answer-box top-answer"><span class="badge">1</span><p id="host-ans-1">---</p></div>
-          <div class="answer-box top-answer"><span class="badge">2</span><p id="host-ans-2">---</p></div>
-          <div class="answer-box top-answer"><span class="badge">3</span><p id="host-ans-3">---</p></div>
+          <div class="answer-box top-answer blur-hidden" id="box-ans-1" onclick="triggerToggleReveal('ans1')">
+            <span class="badge">TOP 1</span>
+            <div class="blur-overlay">🔒 Clicca per rivelare</div>
+            <p id="host-ans-1">---</p>
+          </div>
+          <div class="answer-box top-answer blur-hidden" id="box-ans-2" onclick="triggerToggleReveal('ans2')">
+            <span class="badge">TOP 2</span>
+            <div class="blur-overlay">🔒 Clicca per rivelare</div>
+            <p id="host-ans-2">---</p>
+          </div>
+          <div class="answer-box top-answer blur-hidden" id="box-ans-3" onclick="triggerToggleReveal('ans3')">
+            <span class="badge">TOP 3</span>
+            <div class="blur-overlay">🔒 Clicca per rivelare</div>
+            <p id="host-ans-3">---</p>
+          </div>
         </div>
 
-        <div class="meme-container">
-          <button class="btn btn-meme" id="host-btn-meme" onclick="triggerMemeReveal()">🎭 Rivela Risposta MEME</button>
-          <div id="host-meme-box" class="answer-box meme-answer hidden">
+        <!-- Risposta Meme -->
+        <div class="meme-wrapper">
+          <div class="answer-box meme-answer blur-hidden" id="box-ans-meme" onclick="triggerToggleReveal('meme')">
             <span class="badge meme-badge">MEME / FLOP</span>
+            <div class="blur-overlay">🔒 Clicca per rivelare Risposta Meme</div>
             <p id="host-ans-meme">---</p>
           </div>
         </div>
 
-        <div class="reveal-container">
-          <div class="btn-group">
-            <button class="btn btn-reveal" id="host-btn-author" onclick="triggerAuthorReveal()">❓ Chi l'ha Scritto?</button>
-          </div>
-          <div id="host-author-box" class="author-display hidden">
+        <!-- Reveal Autore -->
+        <div class="author-wrapper">
+          <div class="author-display blur-hidden" id="box-ans-author" onclick="triggerToggleReveal('author')">
+            <div class="blur-overlay">❓ Chi l'ha Scritto? (Clicca per svelare l'Autore)</div>
             <span class="written-by">Scritto da:</span>
             <h2 id="host-author-name" class="glow-green">---</h2>
           </div>
@@ -159,7 +179,6 @@
         </div>
       </div>
 
-      <!-- CODA BUZZ REGIA -->
       <div id="regia-buzzer-queue-card" class="card buzzer-queue-card hidden">
         <div class="queue-header">
           <h3>🚨 Ordine Prenotazioni in Diretta</h3>
@@ -172,22 +191,35 @@
         <div id="regia-buzzer-list" class="buzzer-list"></div>
       </div>
 
+      <!-- Spoiler Completo per Regia + Tasti Controllo Reveal -->
       <div class="card regia-spoiler-card">
         <div class="regia-spoiler-header">
-          <span>AUTORE DI QUESTA SCHEDA:</span>
+          <span>AUTORE DELLA SCHEDA:</span>
           <h1 id="regia-author-name" class="glow-green">Nome Autore</h1>
         </div>
 
         <div class="regia-answers-list">
-          <div class="regia-ans-item"><strong>Top 1:</strong> <span id="regia-ans-1">---</span></div>
-          <div class="regia-ans-item"><strong>Top 2:</strong> <span id="regia-ans-2">---</span></div>
-          <div class="regia-ans-item"><strong>Top 3:</strong> <span id="regia-ans-3">---</span></div>
-          <div class="regia-ans-item regia-meme-item"><strong>Meme:</strong> <span id="regia-ans-meme">---</span></div>
+          <div class="regia-ans-item">
+            <div class="regia-ans-text"><strong>Top 1:</strong> <span id="regia-ans-1">---</span></div>
+            <button class="btn btn-sm btn-secondary" id="regia-btn-ans1" onclick="triggerToggleReveal('ans1')">Mostra su TV</button>
+          </div>
+          <div class="regia-ans-item">
+            <div class="regia-ans-text"><strong>Top 2:</strong> <span id="regia-ans-2">---</span></div>
+            <button class="btn btn-sm btn-secondary" id="regia-btn-ans2" onclick="triggerToggleReveal('ans2')">Mostra su TV</button>
+          </div>
+          <div class="regia-ans-item">
+            <div class="regia-ans-text"><strong>Top 3:</strong> <span id="regia-ans-3">---</span></div>
+            <button class="btn btn-sm btn-secondary" id="regia-btn-ans3" onclick="triggerToggleReveal('ans3')">Mostra su TV</button>
+          </div>
+          <div class="regia-ans-item regia-meme-item">
+            <div class="regia-ans-text"><strong>Meme:</strong> <span id="regia-ans-meme">---</span></div>
+            <button class="btn btn-sm btn-meme" id="regia-btn-meme" onclick="triggerToggleReveal('meme')">Mostra Meme</button>
+          </div>
         </div>
 
         <div class="regia-actions">
-          <button class="btn btn-meme" onclick="triggerMemeReveal()">Mostra Meme su Host</button>
-          <button class="btn btn-reveal" onclick="triggerAuthorReveal()">Rivela Autore su Host</button>
+          <button class="btn btn-primary" onclick="triggerRevealAllTop3()">Rivela Tutte le Top 3 su Host</button>
+          <button class="btn btn-reveal" id="regia-btn-author" onclick="triggerToggleReveal('author')">Rivela Autore su Host</button>
         </div>
       </div>
 

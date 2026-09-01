@@ -4,14 +4,19 @@ let GAME_DATA_LOCAL = typeof GAME_DATA !== "undefined" ? GAME_DATA : [];
 let currentGameState = {
   currentRound: 0,
   currentSubmission: 0,
-  isMemeRevealed: false,
-  isAuthorRevealed: false,
+  revealed: {
+    ans1: false,
+    ans2: false,
+    ans3: false,
+    meme: false,
+    author: false,
+  },
   buzzerQueue: [],
 };
 let myPlayerName = "";
 let playersList = [];
 
-// Ricezione Stato Iniziale
+// Inizializzazione
 socket.on("init_game", (data) => {
   if (data && data.gameData && data.gameData.length > 0) {
     GAME_DATA_LOCAL = data.gameData;
@@ -23,7 +28,6 @@ socket.on("init_game", (data) => {
   updateViews();
 });
 
-// Navigazione Viste
 function goToView(viewId) {
   document
     .querySelectorAll(".view-section")
@@ -35,7 +39,7 @@ function goToView(viewId) {
   }
 }
 
-// ==================== GIOCATORE ====================
+// Giocatore
 function joinGame() {
   const input = document.getElementById("player-name-input");
   const name = input.value.trim();
@@ -55,7 +59,7 @@ function hitBuzzer() {
   socket.emit("press_buzzer");
 }
 
-// ==================== NAVIGAZIONE CARTE ====================
+// Navigazione Schede
 function nextCard() {
   if (!GAME_DATA_LOCAL || GAME_DATA_LOCAL.length === 0) return;
   const round = GAME_DATA_LOCAL[currentGameState.currentRound];
@@ -92,12 +96,13 @@ function prevCard() {
   });
 }
 
-function triggerMemeReveal() {
-  socket.emit("reveal_meme");
+// Reveal Controls
+function triggerToggleReveal(targetKey) {
+  socket.emit("toggle_reveal", targetKey);
 }
 
-function triggerAuthorReveal() {
-  socket.emit("reveal_author");
+function triggerRevealAllTop3() {
+  socket.emit("reveal_all_top3");
 }
 
 function triggerBuzzerReset() {
@@ -115,34 +120,25 @@ function scoreCurrentBuzzWinner(points) {
   }
 }
 
-// ==================== EVENTI SOCKET ====================
+// Eventi Socket
 socket.on("card_updated", (state) => {
   currentGameState = state;
   renderBuzzerQueue([]);
   updateViews();
 });
 
-socket.on("meme_revealed", () => {
-  currentGameState.isMemeRevealed = true;
-  document.getElementById("host-btn-meme").classList.add("hidden");
-  document.getElementById("host-meme-box").classList.remove("hidden");
+socket.on("reveal_updated", (revealedState) => {
+  currentGameState.revealed = revealedState;
+  applyRevealUI();
 });
 
-socket.on("author_revealed", () => {
-  currentGameState.isAuthorRevealed = true;
-  document.getElementById("host-btn-author").classList.add("hidden");
-  document.getElementById("host-author-box").classList.remove("hidden");
-});
-
-// Aggiornamento Ordine di Buzz
-socket.on("buzzer_queue_updated", ({ queue, firstPlayer }) => {
+socket.on("buzzer_queue_updated", ({ queue }) => {
   currentGameState.buzzerQueue = queue;
   renderBuzzerQueue(queue);
 
   const btn = document.getElementById("buzzer-btn");
   const status = document.getElementById("player-status-msg");
 
-  // Verifica posizione del giocatore locale
   const myIndex = queue.findIndex((item) => item.name === myPlayerName);
   if (myIndex !== -1) {
     if (myIndex === 0) {
@@ -190,6 +186,80 @@ function modifyScore(playerName, delta) {
 }
 
 // ==================== RENDERING UI ====================
+function updateViews() {
+  if (!GAME_DATA_LOCAL || GAME_DATA_LOCAL.length === 0) return;
+
+  const round = GAME_DATA_LOCAL[currentGameState.currentRound];
+  if (!round) return;
+
+  const validSubs = round.submissions.filter(
+    (s) => s.player && s.player !== "a a",
+  );
+  const sub = validSubs[currentGameState.currentSubmission] || validSubs[0];
+  if (!sub) return;
+
+  // Schermo Host
+  document.getElementById("host-round-badge").textContent =
+    `Round ${round.round} / ${GAME_DATA_LOCAL.length}`;
+  document.getElementById("host-card-counter").textContent =
+    `Scheda ${currentGameState.currentSubmission + 1} di ${validSubs.length}`;
+  document.getElementById("host-story").textContent = round.story;
+  document.getElementById("host-ans-1").textContent = sub.top3[0] || "---";
+  document.getElementById("host-ans-2").textContent = sub.top3[1] || "---";
+  document.getElementById("host-ans-3").textContent = sub.top3[2] || "---";
+  document.getElementById("host-ans-meme").textContent = sub.meme || "---";
+  document.getElementById("host-author-name").textContent = sub.player;
+
+  // Regia
+  document.getElementById("regia-round-title").textContent =
+    `Round ${round.round}: ${round.story.substring(0, 45)}...`;
+  document.getElementById("regia-card-counter").textContent =
+    `Scheda ${currentGameState.currentSubmission + 1} / ${validSubs.length}`;
+  document.getElementById("regia-author-name").textContent = sub.player;
+  document.getElementById("regia-ans-1").textContent = sub.top3[0] || "---";
+  document.getElementById("regia-ans-2").textContent = sub.top3[1] || "---";
+  document.getElementById("regia-ans-3").textContent = sub.top3[2] || "---";
+  document.getElementById("regia-ans-meme").textContent = sub.meme || "---";
+
+  applyRevealUI();
+}
+
+function applyRevealUI() {
+  const rev = currentGameState.revealed || {};
+
+  // Host: Gestione classi blur-hidden
+  const setBox = (id, isShown) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (isShown) el.classList.remove("blur-hidden");
+    else el.classList.add("blur-hidden");
+  };
+
+  setBox("box-ans-1", rev.ans1);
+  setBox("box-ans-2", rev.ans2);
+  setBox("box-ans-3", rev.ans3);
+  setBox("box-ans-meme", rev.meme);
+  setBox("box-ans-author", rev.author);
+
+  // Regia: Aggiornamento etichette pulsanti
+  const setRegiaBtn = (id, isShown, label) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = isShown ? `Nascondi ${label}` : `Mostra ${label}`;
+    if (isShown) {
+      el.classList.add("btn-active-revealed");
+    } else {
+      el.classList.remove("btn-active-revealed");
+    }
+  };
+
+  setRegiaBtn("regia-btn-ans1", rev.ans1, "Top 1");
+  setRegiaBtn("regia-btn-ans2", rev.ans2, "Top 2");
+  setRegiaBtn("regia-btn-ans3", rev.ans3, "Top 3");
+  setRegiaBtn("regia-btn-meme", rev.meme, "Meme");
+  setRegiaBtn("regia-btn-author", rev.author, "Autore");
+}
+
 function renderBuzzerQueue(queue) {
   const hostCard = document.getElementById("host-buzzer-queue-card");
   const hostList = document.getElementById("host-buzzer-list");
@@ -233,58 +303,6 @@ function renderBuzzerQueue(queue) {
 
   if (hostList) hostList.innerHTML = generateHtml(false);
   if (regiaList) regiaList.innerHTML = generateHtml(true);
-}
-
-function updateViews() {
-  if (!GAME_DATA_LOCAL || GAME_DATA_LOCAL.length === 0) return;
-
-  const round = GAME_DATA_LOCAL[currentGameState.currentRound];
-  if (!round) return;
-
-  const validSubs = round.submissions.filter(
-    (s) => s.player && s.player !== "a a",
-  );
-  const sub = validSubs[currentGameState.currentSubmission] || validSubs[0];
-  if (!sub) return;
-
-  // Schermo Host
-  document.getElementById("host-round-badge").textContent =
-    `Round ${round.round} / ${GAME_DATA_LOCAL.length}`;
-  document.getElementById("host-card-counter").textContent =
-    `Scheda ${currentGameState.currentSubmission + 1} di ${validSubs.length}`;
-  document.getElementById("host-story").textContent = round.story;
-  document.getElementById("host-ans-1").textContent = sub.top3[0] || "---";
-  document.getElementById("host-ans-2").textContent = sub.top3[1] || "---";
-  document.getElementById("host-ans-3").textContent = sub.top3[2] || "---";
-  document.getElementById("host-ans-meme").textContent = sub.meme || "---";
-  document.getElementById("host-author-name").textContent = sub.player;
-
-  if (currentGameState.isMemeRevealed) {
-    document.getElementById("host-btn-meme").classList.add("hidden");
-    document.getElementById("host-meme-box").classList.remove("hidden");
-  } else {
-    document.getElementById("host-btn-meme").classList.remove("hidden");
-    document.getElementById("host-meme-box").classList.add("hidden");
-  }
-
-  if (currentGameState.isAuthorRevealed) {
-    document.getElementById("host-btn-author").classList.add("hidden");
-    document.getElementById("host-author-box").classList.remove("hidden");
-  } else {
-    document.getElementById("host-btn-author").classList.remove("hidden");
-    document.getElementById("host-author-box").classList.add("hidden");
-  }
-
-  // Regia
-  document.getElementById("regia-round-title").textContent =
-    `Round ${round.round}: ${round.story.substring(0, 50)}...`;
-  document.getElementById("regia-card-counter").textContent =
-    `Scheda ${currentGameState.currentSubmission + 1} / ${validSubs.length}`;
-  document.getElementById("regia-author-name").textContent = sub.player;
-  document.getElementById("regia-ans-1").textContent = sub.top3[0] || "---";
-  document.getElementById("regia-ans-2").textContent = sub.top3[1] || "---";
-  document.getElementById("regia-ans-3").textContent = sub.top3[2] || "---";
-  document.getElementById("regia-ans-meme").textContent = sub.meme || "---";
 }
 
 function renderScoreboards() {
